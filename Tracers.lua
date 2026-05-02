@@ -12,7 +12,8 @@ local Visuals  = _G.ScoutCheat.Config.Visuals
 
 -- Pula aktywnych linii: { line, spawnedAt, startPos, endPos }
 local activeTracers = {}
-local toolConns     = {}   -- połączenia narzędzi
+local toolConns     = {}
+local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
 
 local function screenPoint(worldPos)
     local p, onScreen = camera:WorldToScreenPoint(worldPos)
@@ -85,7 +86,7 @@ end
 
 -- InputService fallback: strzelaj tracer gdy LMB kliknięty i gracz ma broń
 local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input, gpe)
+reg(UIS.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
     local char = lplayer.Character
@@ -93,7 +94,6 @@ UIS.InputBegan:Connect(function(input, gpe)
     local tool = char:FindFirstChildOfClass("Tool")
     if not tool then return end
 
-    -- Raycast prosto z kamery
     local origin    = camera.CFrame.Position
     local direction = camera.CFrame.LookVector * 1000
     local params    = RaycastParams.new()
@@ -103,7 +103,7 @@ UIS.InputBegan:Connect(function(input, gpe)
     local hitPos = result and result.Position or (origin + direction)
     local barrelPos = getBarrelPos(tool)
     spawnTracer(barrelPos, hitPos)
-end)
+end))
 
 -- Podłącz do aktualnej postaci i jej zmian
 local function initPlayer()
@@ -113,7 +113,7 @@ end
 initPlayer()
 
 -- RenderStepped: animuj fade linii
-RunService.RenderStepped:Connect(function()
+reg(RunService.RenderStepped:Connect(function()
     local now   = tick()
     local alive = {}
     for _, t in ipairs(activeTracers) do
@@ -122,7 +122,7 @@ RunService.RenderStepped:Connect(function()
         if age >= fade then
             pcall(function() t.line:Remove() end)
         else
-            local alpha = 1 - (age / fade)   -- 1 = pełna widoczność, 0 = niewidoczna
+            local alpha = 1 - (age / fade)
             local sp, onS = screenPoint(t.from)
             local ep, onE = screenPoint(t.to)
             if onS or onE then
@@ -137,13 +137,5 @@ RunService.RenderStepped:Connect(function()
         end
     end
     activeTracers = alive
-end)
+end))
 
--- Cleanup
-getgenv().ScoutCheat._cleanupTracers = function()
-    for _, t in ipairs(activeTracers) do pcall(function() t.line:Remove() end) end
-    activeTracers = {}
-    for _, c in ipairs(toolConns) do pcall(function() c:Disconnect() end) end
-    toolConns = {}
-    print("[Tracers] Rozładowano.")
-end

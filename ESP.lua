@@ -10,6 +10,8 @@ local ESP = _G.ScoutCheat.Config.ESP
 local RotationAngle, Tick = -45, tick()
 
 local Functions = {}
+local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
+
 function Functions:Create(Class, Props)
     local obj = typeof(Class)=='string' and Instance.new(Class) or Class
     for k,v in pairs(Props) do obj[k]=v end
@@ -25,6 +27,7 @@ function Functions:FadeOutOnDist(el, dist)
 end
 
 local SG = Functions:Create("ScreenGui",{Parent=CoreGui,Name="ESPHolder",ResetOnSpawn=false})
+getgenv().ScoutCheat._espGui = SG  -- Unload będzie destroy'ował
 
 local function CreateESP(plr)
     if SG:FindFirstChild(plr.Name) then SG[plr.Name]:Destroy() end
@@ -44,7 +47,7 @@ local function CreateESP(plr)
             Box.Visible=false Name.Visible=false HBar.Visible=false HBarBG.Visible=false Chams.Enabled=false
             if not plr then SG:Destroy() if Conn then Conn:Disconnect() end end
         end
-        Conn = RunService.RenderStepped:Connect(function()
+        Conn = reg(RunService.RenderStepped:Connect(function()
             if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
                 local HRP = plr.Character.HumanoidRootPart
                 local Hum = plr.Character:FindFirstChild("Humanoid")
@@ -88,4 +91,4 @@ end
 for _,v in pairs(Players:GetPlayers()) do
     if v~=lplayer then coroutine.wrap(CreateESP)(v) end
 end
-Players.PlayerAdded:Connect(function(v) coroutine.wrap(CreateESP)(v) end)
+reg(Players.PlayerAdded:Connect(function(v) coroutine.wrap(CreateESP)(v) end))

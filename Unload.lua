@@ -1,52 +1,51 @@
 -- Unload.lua
 -- Naciśnij DELETE aby całkowicie wyłączyć i wyczyścić ScoutCheat.
--- Usuwa ESP, Drawing objects, disconnectuje eventy, czyści _G.
 
 local UserInputService = game:GetService("UserInputService")
-local CoreGui          = game:GetService("CoreGui")
 
+local unloadConn = nil
 local function unloadAll()
     print("[ScoutCheat] Rozładowywanie...")
 
-    -- 1. Aimbot cleanup
-    if getgenv().ScoutCheat and getgenv().ScoutCheat._cleanupAimbot then
-        pcall(getgenv().ScoutCheat._cleanupAimbot)
+    if not getgenv().ScoutCheat then
+        print("[ScoutCheat] Skrypt nie jest w pełni załadowany lub został już rozładowany.")
+        return
     end
 
-    -- 2. Tracers cleanup
-    if getgenv().ScoutCheat and getgenv().ScoutCheat._cleanupTracers then
-        pcall(getgenv().ScoutCheat._cleanupTracers)
+    -- 1. Disconnect all connections
+    if getgenv().ScoutCheat._connections then
+        for _, conn in pairs(getgenv().ScoutCheat._connections) do
+            pcall(function() conn:Disconnect() end)
+        end
+        print("[Unload] Rozłączono eventy.")
     end
 
-    -- 3. Usuń ESP ScreenGui
-    local espHolder = CoreGui:FindFirstChild("ESPHolder")
-    if not espHolder then
-        -- ESP jest w PlayerGui
-        local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-        if pg then espHolder = pg:FindFirstChild("ESPHolder") end
-    end
-    if espHolder then
-        pcall(function() espHolder:Destroy() end)
-        print("[ESP] ScreenGui usunięty.")
-    end
-
-    -- 4. Usuń wszystkie Drawing objects (FOV Circle, GUI elementy, tracery)
-    pcall(function()
-        for _, drawing in pairs(getgenv().__drawings or {}) do
+    -- 2. Remove all drawings
+    if getgenv().ScoutCheat._drawings then
+        for _, drawing in pairs(getgenv().ScoutCheat._drawings) do
             pcall(function() drawing:Remove() end)
         end
-    end)
-    -- Agresywny fallback: Drawing.new zwraca unikalne obiekty – możemy tylko je zebrać
-    -- przez wcześniej zarejestrowaną tablicę lub polegamy na per-module cleanup.
+        print("[Unload] Usunięto obiekty Drawing.")
+    end
 
-    -- 5. Wyczyść globale
-    getgenv().ScoutCheat  = nil
-    _G.ScoutCheat         = nil
+    -- 3. Remove ESP Gui
+    if getgenv().ScoutCheat._espGui then
+        pcall(function() getgenv().ScoutCheat._espGui:Destroy() end)
+        print("[Unload] ESP ScreenGui usunięte.")
+    else
+        -- Fallback
+        local CoreGui = game:GetService("CoreGui")
+        local espHolder = CoreGui:FindFirstChild("ESPHolder")
+        if not espHolder then
+            local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+            if pg then espHolder = pg:FindFirstChild("ESPHolder") end
+        end
+        if espHolder then pcall(function() espHolder:Destroy() end) end
+    end
 
-    -- 6. Przywróć oświetlenie
+    -- 4. Restore Lighting
     pcall(function()
         local Lighting = game:GetService("Lighting")
-        -- wartości zapisane przez Visuals.lua
         if getgenv()._origLighting then
             local o = getgenv()._origLighting
             Lighting.Brightness       = o.Brightness
@@ -58,17 +57,24 @@ local function unloadAll()
         end
     end)
 
-    print("[ScoutCheat] ✔ Całkowicie rozładowano. Odśwież stronę / wczytaj ponownie aby użyć skryptu.")
+    -- 5. Clear globals
+    getgenv().ScoutCheat  = nil
+    _G.ScoutCheat         = nil
+
+    if unloadConn then unloadConn:Disconnect() end
+
+    print("[ScoutCheat] ✔ Całkowicie rozładowano. Skrypt jest teraz nieaktywny.")
 end
 
--- Klawisz DELETE = Unload
-UserInputService.InputBegan:Connect(function(input, gpe)
+unloadConn = UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.Delete then
         unloadAll()
     end
 end)
+if getgenv().ScoutCheat then
+    table.insert(getgenv().ScoutCheat._connections, unloadConn)
+end
 
--- Eksponuj ręcznie
 getgenv().ScoutUnload = unloadAll
 print("[Unload] Gotowy. Naciśnij DELETE aby wyłączyć ScoutCheat.")

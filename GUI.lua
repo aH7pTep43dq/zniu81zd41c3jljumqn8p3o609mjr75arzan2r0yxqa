@@ -58,9 +58,12 @@ end
 LoadConfig()
 
 -- ─── Drawing helpers ──────────────────────────────────────────────────────────
-local function mkRect(z) local r = Drawing.new("Square") r.Filled=true r.Visible=false r.ZIndex=z return r end
-local function mkText(s,z) local t = Drawing.new("Text") t.Size=s t.Font=Drawing.Fonts.UI t.Visible=false t.ZIndex=z return t end
-local function mkLine(z) local l = Drawing.new("Line") l.Visible=false l.ZIndex=z return l end
+local function reg(c)  table.insert(getgenv().ScoutCheat._connections, c) return c end
+local function regD(d) table.insert(getgenv().ScoutCheat._drawings,     d) return d end
+
+local function mkRect(z) local r = Drawing.new("Square") r.Filled=true r.Visible=false r.ZIndex=z return regD(r) end
+local function mkText(s,z) local t = Drawing.new("Text") t.Size=s t.Font=Drawing.Fonts.UI t.Visible=false t.ZIndex=z return regD(t) end
+local function mkLine(z) local l = Drawing.new("Line") l.Visible=false l.ZIndex=z return regD(l) end
 
 -- ─── GUI state ────────────────────────────────────────────────────────────────
 local GUI = { Visible=false, X=120, Y=80, W=295, H=340, Dragging=false, DragOffset=Vector2.new() }
@@ -202,7 +205,7 @@ end
 -- ─── Input ────────────────────────────────────────────────────────────────────
 local function inBox(mx,my,bx,by,bw,bh) return mx>=bx and mx<=bx+bw and my>=by and my<=by+bh end
 
-UserInputService.InputBegan:Connect(function(input, gpe)
+reg(UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     -- Hotkeys
     if input.KeyCode == Enum.KeyCode.K     then GUI.Visible=not GUI.Visible updateGUI() return end
@@ -247,15 +250,15 @@ UserInputService.InputBegan:Connect(function(input, gpe)
             GUI.Visible=false setAll(false)
         end
     end
-end)
+end))
 
-UserInputService.InputEnded:Connect(function(input)
+reg(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         GUI.Dragging=false sliderActive=nil
     end
-end)
+end))
 
-RunService.RenderStepped:Connect(function()
+reg(RunService.RenderStepped:Connect(function()
     local ml = UserInputService:GetMouseLocation()
     if GUI.Dragging then
         GUI.X=ml.X-GUI.DragOffset.X GUI.Y=ml.Y-GUI.DragOffset.Y updateGUI()
@@ -268,4 +271,4 @@ RunService.RenderStepped:Connect(function()
         end
         updateGUI()
     end
-end)
+end))

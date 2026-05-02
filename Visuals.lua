@@ -21,9 +21,11 @@ getgenv()._origLighting = {
     FogColor        = origFogColor,
 }
 
+local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
+
 local rainbowHue = 0
 
-RunService.RenderStepped:Connect(function(dt)
+reg(RunService.RenderStepped:Connect(function(dt)
     if Visuals.Fullbright then
         Lighting.Brightness = 2
         Lighting.Ambient = Color3.fromRGB(255, 255, 255)
@@ -54,4 +56,4 @@ RunService.RenderStepped:Connect(function(dt)
             end
         end
     end
-end)
+end))

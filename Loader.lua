@@ -6,7 +6,7 @@ local repoURL = "https://raw.githubusercontent.com/piotrwrt150/zniu81zd41c3jljum
 print("[ScoutCheat] Ładowanie Config.lua...")
 local Config = loadstring(game:HttpGet(repoURL .. "Config.lua"))()
 
-getgenv().ScoutCheat = { Config = Config }
+getgenv().ScoutCheat = { Config = Config, _connections = {}, _drawings = {} }
 _G.ScoutCheat = getgenv().ScoutCheat
 
 print("[ScoutCheat] Ładowanie ESP.lua...")
@@ -31,4 +31,4 @@ print("[ScoutCheat] ✔ Załadowano pomyślnie!")
 print("  K        – Menu (Aimbot GUI)")
 print("  L        – Zapisz config")
 print("  J        – Wczytaj config")
-print("  DELETE   – Unload (wyłącz wszystko)")
+print("  DELETE   – Unload")

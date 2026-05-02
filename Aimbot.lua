@@ -33,6 +33,8 @@ local function GetPredictedPos(plr, basePos)
     end
 end
 
+local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
+
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Visible = Aim.FOV_Enabled
 FOVCircle.Radius = Aim.FOV_Radius
@@ -40,6 +42,7 @@ FOVCircle.Color = Aim.FOV_Color
 FOVCircle.Thickness = Aim.FOV_Thickness
 FOVCircle.Transparency = Aim.FOV_Transparency
 FOVCircle.Filled = false
+table.insert(getgenv().ScoutCheat._drawings, FOVCircle)
 
 local function IsVisible(character, aimPart)
     local part = character:FindFirstChild(aimPart)
@@ -73,7 +76,7 @@ local function GetTarget()
     return closest, minDist
 end
 
-UserInputService.InputBegan:Connect(function(input, gpe)
+reg(UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.UserInputType == Aim.AimKey then
         aiming = true
@@ -81,13 +84,13 @@ UserInputService.InputBegan:Connect(function(input, gpe)
             randomOffset = Vector3.new((math.random()-0.5)*Aim.RandomIntensity, (math.random()-0.5)*Aim.RandomIntensity, (math.random()-0.5)*Aim.RandomIntensity) 
         end
     end
-end)
+end))
 
-UserInputService.InputEnded:Connect(function(input)
+reg(UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType==Aim.AimKey then aiming=false end
-end)
+end))
 
-RunService.RenderStepped:Connect(function()
+reg(RunService.RenderStepped:Connect(function()
     local ml = UserInputService:GetMouseLocation()
     FOVCircle.Position = ml
     FOVCircle.Radius = Aim.FOV_Radius
@@ -113,14 +116,5 @@ RunService.RenderStepped:Connect(function()
             camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, tPos), actualSmoothness)
         end
     end
-end)
+end))
 
--- Expose cleanup
-local _conns = {}
-_G.ScoutCheat._aimbotConnections = _conns
-getgenv().ScoutCheat._cleanupAimbot = function()
-    for _,c in pairs(_conns) do pcall(function() c:Disconnect() end) end
-    if FOVCircle then pcall(function() FOVCircle:Remove() end) end
-    table.clear(velocityCache)
-    print("[Aimbot] Rozładowano.")
-end

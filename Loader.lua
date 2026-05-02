@@ -21,6 +21,9 @@ loadstring(game:HttpGet(repoURL .. "Visuals.lua"))()
 print("[ScoutCheat] Ładowanie Tracers.lua...")
 loadstring(game:HttpGet(repoURL .. "Tracers.lua"))()
 
+print("[ScoutCheat] Ładowanie Watermark.lua...")
+loadstring(game:HttpGet(repoURL .. "Watermark.lua"))()
+
 print("[ScoutCheat] Ładowanie GUI.lua...")
 loadstring(game:HttpGet(repoURL .. "GUI.lua"))()
 

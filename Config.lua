@@ -21,6 +21,7 @@ local Config = {
         Enabled = true,
         TeamCheck = false,
         AimPart = "Head",
+        ClosestBone = true,
         Smoothness = 0.08, 
         MaxDistance = 500,
         AimKey = Enum.UserInputType.MouseButton2,
@@ -28,6 +29,8 @@ local Config = {
         Randomization = true,
         RandomIntensity = 0.6, 
         CurveSmoothing = true, 
+        CurveAiming = true,
+        CurveStrength = 1.0,
         FOV_Enabled = true,
         FOV_Radius = 75,
         FOV_Color = Color3.fromRGB(255,255,255),
@@ -44,6 +47,8 @@ local Config = {
         BulletTracerColor = Color3.fromRGB(255, 80, 80),
         BulletTracerThickness = 1.5,
         BulletTracerFadeTime = 0.45, -- sekundy zanim linia zniknie
+        -- Watermark
+        Watermark = true,
     }
 }
 return Config

@@ -23,8 +23,8 @@ FOVCircle.Transparency = Aim.FOV_Transparency
 FOVCircle.Filled = false
 table.insert(getgenv().ScoutCheat._drawings, FOVCircle)
 
-local function IsVisible(character, aimPart)
-    local part = character:FindFirstChild(aimPart)
+local function IsVisible(character, partName)
+    local part = character:FindFirstChild(partName)
     if not part then return false end
     local origin = camera.CFrame.Position
     local target = part.Position
@@ -36,23 +36,40 @@ local function IsVisible(character, aimPart)
     return result == nil
 end
 
+local BONES = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso", "RightUpperArm", "LeftUpperArm", "RightUpperLeg", "LeftUpperLeg"}
+
 local function GetTarget()
-    local closest, minDist = nil, Aim.FOV_Radius
+    local closest, minDist, bestPart = nil, Aim.FOV_Radius, nil
+    local ml = UserInputService:GetMouseLocation()
     for _,v in pairs(Players:GetPlayers()) do
-        if v~=lplayer and v.Character and v.Character:FindFirstChild(Aim.AimPart) and v.Character:FindFirstChild("Humanoid") then
-            if v.Character.Humanoid.Health>0 then
-                if Aim.TeamCheck and v.Team==lplayer.Team then continue end
-                if Aim.VisibleCheck and not IsVisible(v.Character, Aim.AimPart) then continue end
-                local pos, onScreen = camera:WorldToViewportPoint(v.Character[Aim.AimPart].Position)
+        if v~=lplayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health>0 then
+            if Aim.TeamCheck and v.Team==lplayer.Team then continue end
+            
+            local partsToCheck = {v.Character:FindFirstChild(Aim.AimPart)}
+            if Aim.ClosestBone then
+                partsToCheck = {}
+                for _, boneName in ipairs(BONES) do
+                    local b = v.Character:FindFirstChild(boneName)
+                    if b then table.insert(partsToCheck, b) end
+                end
+            end
+            
+            for _, part in ipairs(partsToCheck) do
+                if not part then continue end
+                if Aim.VisibleCheck and not IsVisible(v.Character, part.Name) then continue end
+                local pos, onScreen = camera:WorldToViewportPoint(part.Position)
                 if onScreen then
-                    local ml = UserInputService:GetMouseLocation()
                     local d = (Vector2.new(pos.X,pos.Y)-ml).Magnitude
-                    if d < minDist then closest=v minDist=d end
+                    if d < minDist then 
+                        closest = v 
+                        minDist = d 
+                        bestPart = part 
+                    end
                 end
             end
         end
     end
-    return closest, minDist
+    return closest, minDist, bestPart
 end
 
 reg(UserInputService.InputBegan:Connect(function(input, gpe)
@@ -76,10 +93,10 @@ reg(RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Aim.FOV_Enabled
 
     if Aim.Enabled and aiming then
-        local target, distToMouse = GetTarget()
-        if target and target.Character and target.Character:FindFirstChild(Aim.AimPart) then
+        local target, distToMouse, bestPart = GetTarget()
+        if target and bestPart then
             if distToMouse <= Aim.Deadzone then return end
-            local tPos = target.Character[Aim.AimPart].Position
+            local tPos = bestPart.Position
             if Aim.Randomization then
                 if tick() - lastOffsetChange > 0.2 then
                     randomOffset = randomOffset:Lerp(Vector3.new((math.random()-0.5)*Aim.RandomIntensity, (math.random()-0.5)*Aim.RandomIntensity, (math.random()-0.5)*Aim.RandomIntensity), 0.1)
@@ -87,6 +104,17 @@ reg(RunService.RenderStepped:Connect(function()
                 end
                 tPos = tPos + randomOffset
             end
+            
+            if Aim.CurveAiming then
+                local toTarget = tPos - camera.CFrame.Position
+                local dist = toTarget.Magnitude
+                local upVec = Vector3.new(0, 1, 0)
+                local rightVec = toTarget:Cross(upVec)
+                if rightVec.Magnitude > 0 then rightVec = rightVec.Unit else rightVec = camera.CFrame.RightVector end
+                local curveOffset = rightVec * math.sin(tick() * 2) * (dist * 0.05 * Aim.CurveStrength)
+                tPos = tPos + curveOffset
+            end
+
             local actualSmoothness = Aim.Smoothness
             if Aim.CurveSmoothing then
                 actualSmoothness = actualSmoothness * math.clamp(distToMouse/Aim.FOV_Radius, 0.15, 1)

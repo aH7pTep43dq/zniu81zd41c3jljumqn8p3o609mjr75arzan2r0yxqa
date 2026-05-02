@@ -10,6 +10,8 @@ local Aim = _G.ScoutCheat.Config.Aimbot
 local aiming = false
 local randomOffset = Vector3.new(0,0,0)
 local lastOffsetChange = tick()
+local currentTarget = nil
+local curveSign = 1
 
 
 local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
@@ -95,6 +97,11 @@ reg(RunService.RenderStepped:Connect(function()
     if Aim.Enabled and aiming then
         local target, distToMouse, bestPart = GetTarget()
         if target and bestPart then
+            if target ~= currentTarget then
+                currentTarget = target
+                curveSign = math.random() > 0.5 and 1 or -1
+            end
+            
             if distToMouse <= Aim.Deadzone then return end
             local tPos = bestPart.Position
             if Aim.Randomization then
@@ -111,7 +118,7 @@ reg(RunService.RenderStepped:Connect(function()
                 local upVec = Vector3.new(0, 1, 0)
                 local rightVec = toTarget:Cross(upVec)
                 if rightVec.Magnitude > 0 then rightVec = rightVec.Unit else rightVec = camera.CFrame.RightVector end
-                local curveOffset = rightVec * math.sin(tick() * 2) * (dist * 0.05 * Aim.CurveStrength)
+                local curveOffset = rightVec * curveSign * (distToMouse / Aim.FOV_Radius) * (dist * 0.1 * Aim.CurveStrength)
                 tPos = tPos + curveOffset
             end
 

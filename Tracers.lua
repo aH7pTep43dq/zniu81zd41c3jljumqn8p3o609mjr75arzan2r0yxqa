@@ -105,6 +105,42 @@ local function initPlayer()
 end
 initPlayer()
 
+-- InputService fallback: strzelaj tracer gdy LMB kliknięty dla customowych gier
+local UIS = game:GetService("UserInputService")
+reg(UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+    if not Visuals.BulletTracers then return end
+
+    local char = lplayer.Character
+    if not char then return end
+
+    local origin = camera.CFrame.Position
+    local target = mouse.Hit.Position
+    local direction = (target - origin).Unit * 1000
+
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char, camera}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+
+    local result = Workspace:Raycast(origin, direction, params)
+    local hitPos = result and result.Position or (origin + direction)
+    
+    local tool = char:FindFirstChildOfClass("Tool")
+    local barrelPos = origin
+    if tool then 
+        barrelPos = getBarrelPos(tool) 
+    else
+        local viewmodel = camera:FindFirstChild("Viewmodel") or camera:FindFirstChild("ViewModel")
+        if viewmodel then
+            local p = viewmodel:FindFirstChild("Barrel", true) or viewmodel:FindFirstChild("Muzzle", true) or viewmodel:FindFirstChild("Tip", true)
+            if p and p:IsA("BasePart") then barrelPos = p.Position end
+        end
+    end
+
+    spawnTracer(barrelPos, hitPos)
+end))
+
 -- RenderStepped: animuj fade linii
 reg(RunService.RenderStepped:Connect(function()
     if not Visuals.BulletTracers then

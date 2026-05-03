@@ -303,10 +303,20 @@ local function updateGUI()
     dClose.Position = Vector2.new(x + w - 22, y + 8) dClose.Text = "X" dClose.Color = COL.Danger dClose.Visible = true
     
     -- Tabs (Sidebar)
-    
-    drawTab("Aimbot", 1, "Aimbot")
-    drawTab("Visuals", 2, "Visuals")
-    drawTab("Settings", 3, "Settings")
+    local tabList = {"Aimbot", "Visuals", "LegitPlus", "Settings"}
+    for i, name in ipairs(tabList) do
+        local b = tabBtns[name]
+        if not b then continue end
+        local yPos = y + hh + (i-1)*40
+        b.BG.Position = Vector2.new(x, yPos)
+        b.BG.Size = Vector2.new(sw, 40)
+        b.BG.Color = GUI.Tab == name and COL.Panel or COL.Sidebar
+        b.BG.Visible = true
+        b.Lbl.Position = Vector2.new(x + 15, yPos + 12)
+        b.Lbl.Text = name == "LegitPlus" and "Legit+" or name
+        b.Lbl.Color = GUI.Tab == name and COL.Accent or COL.Text
+        b.Lbl.Visible = true
+    end
 
     cBG.Position = Vector2.new(x + sw + 5, y + hh + 5) cBG.Size = Vector2.new(w - sw - 10, h - hh - 10) cBG.Color = COL.Panel cBG.Visible = true
 

@@ -108,7 +108,7 @@ local function mkLine(z) local l = Drawing.new("Line") l.Visible=false l.ZIndex=
 local GUI = { 
     Visible = false, 
     X = 120, Y = 80, 
-    W = 460, H = 340, 
+    W = 460, H = 400, 
     Dragging = false, 
     DragOffset = Vector2.new(), 
     Tab = "Aimbot", 
@@ -298,11 +298,12 @@ local function updateGUI()
 
         drawSlider(1, 175, "Smoothness", (Aim.Smoothness - 0.01) / 0.29, string.format("%.2f", Aim.Smoothness))
         drawSlider(2, 215, "FOV Radius", (Aim.FOV_Radius - 20) / 280, tostring(math.floor(Aim.FOV_Radius)))
+        drawSlider(3, 255, "Deadzone", Aim.Deadzone / 50, tostring(math.floor(Aim.Deadzone)))
         
-        drawButton(btn1BG, btn1Lbl, btn1Val, 260, "Target Part:", Aim.AimPart)
+        drawButton(btn1BG, btn1Lbl, btn1Val, 295, "Target Part:", Aim.AimPart)
         
         local keyName = tostring(Aim.AimKey):split(".")[3]
-        drawButton(btn2BG, btn2Lbl, btn2Val, 290, "Aim Keybind:", GUI.Binding and "..." or keyName)
+        drawButton(btn2BG, btn2Lbl, btn2Val, 325, "Aim Keybind:", GUI.Binding and "..." or keyName)
 
     elseif GUI.Tab == "Visuals" then
         drawToggle(1, 15, "ESP Master Switch", ESPConf.Enabled)
@@ -341,8 +342,10 @@ reg(UserInputService.InputBegan:Connect(function(input, gpe)
     if GUI.Binding then
         if input.UserInputType == Enum.UserInputType.Keyboard then
             Aim.AimKey = input.KeyCode
-        else
+        elseif input.UserInputType ~= Enum.UserInputType.MouseButton1 then
             Aim.AimKey = input.UserInputType
+        else
+            return -- Ignore MouseButton1 to avoid accidental re-binding to select key
         end
         GUI.Binding = false
         updateGUI()
@@ -376,12 +379,13 @@ reg(UserInputService.InputBegan:Connect(function(input, gpe)
             local slw = cw - 80
             if inBox(mx,my, cx, y + hh + 175, slw, 30) then sliderActive = 1 end
             if inBox(mx,my, cx, y + hh + 215, slw, 30) then sliderActive = 2 end
+            if inBox(mx,my, cx, y + hh + 255, slw, 30) then sliderActive = 3 end
 
-            if inBox(mx,my, cx, y + hh + 260, cw, 24) then
+            if inBox(mx,my, cx, y + hh + 295, cw, 24) then
                 local p = {"Head", "HumanoidRootPart", "UpperTorso"}
                 Aim.AimPart = p[(table.find(p, Aim.AimPart) or 1) % 3 + 1] updateGUI()
             end
-            if inBox(mx,my, cx, y + hh + 290, cw, 24) then
+            if inBox(mx,my, cx, y + hh + 325, cw, 24) then
                 GUI.Binding = true updateGUI()
             end
 
@@ -430,6 +434,7 @@ reg(RunService.RenderStepped:Connect(function()
         local pct = math.clamp((ml.X - cx) / slw, 0, 1)
         if     sliderActive == 1 then Aim.Smoothness = math.floor((0.01 + pct * 0.29) * 100) / 100
         elseif sliderActive == 2 then Aim.FOV_Radius = math.floor(20 + pct * 280)
+        elseif sliderActive == 3 then Aim.Deadzone = math.floor(pct * 50)
         end
         updateGUI()
     end

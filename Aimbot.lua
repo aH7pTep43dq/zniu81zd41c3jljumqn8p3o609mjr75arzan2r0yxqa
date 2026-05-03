@@ -126,7 +126,11 @@ reg(RunService.RenderStepped:Connect(function()
             if Aim.CurveSmoothing then
                 actualSmoothness = actualSmoothness * math.clamp(distToMouse/Aim.FOV_Radius, 0.15, 1)
             end
-            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, tPos), actualSmoothness)
+            if Aim.SmoothnessVariance then
+                -- Wariancja +/- 10% aktualnej wartości smoothness
+                actualSmoothness = actualSmoothness + (math.random() - 0.5) * (actualSmoothness * 0.2)
+            end
+            camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, tPos), math.clamp(actualSmoothness, 0.01, 1))
         end
     end
 end))

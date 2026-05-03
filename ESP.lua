@@ -76,10 +76,15 @@ local function CreateESP(plr)
                     HBar.Position=UDim2.new(0,Pos.X-w/2-6,0,Pos.Y-h/2+h*(1-hp)) HBar.Size=UDim2.new(0,4,0,h*hp)
                     HBar.Visible=ESP.Drawing.Healthbar.Enabled HBarBG.Visible=ESP.Drawing.Healthbar.Enabled
                     Name.Visible=ESP.Drawing.Names.Enabled
+                    local distStr = ""
+                    if ESP.Options.Distance then
+                        distStr = string.format(' <font color="rgb(180,180,180)">[%dm]</font>', math.floor(Dist))
+                    end
+
                     if ESP.Options.Friendcheck and lplayer:IsFriendsWith(plr.UserId) then
-                        Name.Text=string.format('(<font color="rgb(%d,%d,%d)">F</font>) %s',ESP.Options.FriendcheckRGB.R*255,ESP.Options.FriendcheckRGB.G*255,ESP.Options.FriendcheckRGB.B*255,plr.Name)
+                        Name.Text=string.format('(<font color="rgb(%d,%d,%d)">F</font>) %s%s',ESP.Options.FriendcheckRGB.R*255,ESP.Options.FriendcheckRGB.G*255,ESP.Options.FriendcheckRGB.B*255,plr.Name, distStr)
                     else
-                        Name.Text=string.format('(<font color="rgb(255,0,0)">E</font>) %s',plr.Name)
+                        Name.Text=string.format('(<font color="rgb(255,0,0)">E</font>) %s%s',plr.Name, distStr)
                     end
                     Name.Position=UDim2.new(0,Pos.X,0,Pos.Y-h/2-9)
                 else Hide() end

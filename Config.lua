@@ -2,7 +2,7 @@ local Config = {
     ESP = {
         Enabled = true, TeamCheck = false, MaxDistance = 500, FontSize = 11,
         FadeOut = { OnDistance = true },
-        Options = { Friendcheck = true, FriendcheckRGB = Color3.fromRGB(0,255,0) },
+        Options = { Friendcheck = true, FriendcheckRGB = Color3.fromRGB(0,255,0), Distance = true },
         Drawing = {
             Chams = { Enabled=true, Thermal=true, FillRGB=Color3.fromRGB(119,120,255), Fill_Transparency=0.5, OutlineRGB=Color3.fromRGB(119,120,255), VisibleCheck=true },
             Names = { Enabled=true },
@@ -28,6 +28,7 @@ local Config = {
         Deadzone = 12, 
         Randomization = true,
         RandomIntensity = 0.6, 
+        SmoothnessVariance = true,
         CurveSmoothing = true, 
         CurveAiming = true,
         CurveStrength = 1.0,
@@ -49,6 +50,9 @@ local Config = {
         BulletTracerFadeTime = 0.45, -- sekundy zanim linia zniknie
         -- Watermark
         Watermark = true,
+    },
+    GUI = {
+        Theme = "Purple"
     }
 }
 return Config

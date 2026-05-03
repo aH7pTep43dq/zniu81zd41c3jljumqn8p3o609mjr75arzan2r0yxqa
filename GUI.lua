@@ -18,7 +18,10 @@ local THEMES = {
 local THEME_NAMES = {"Purple", "Red", "Green", "Blue", "Pink", "Orange"}
 
 -- --- Config Save / Load -------------------------------------------------------
-local CONFIG_FILE = "scout_cheat_config.json"
+local selectedSlot = 1
+local function getFileName()
+    return "scout_cheat_config_" .. selectedSlot .. ".json"
+end
 
 local function SaveConfig()
     local data = {
@@ -43,19 +46,25 @@ local function SaveConfig()
         ESP_Names          = ESPConf.Drawing.Names.Enabled,
         ESP_Health         = ESPConf.Drawing.Healthbar.Enabled,
         ESP_Distance       = ESPConf.Options.Distance,
-        GUI_Theme          = GUIConf.Theme
+        GUI_Theme          = GUIConf.Theme,
+        Aim_Acceleration   = Aim.Acceleration,
+        Aim_Braking        = Aim.Braking,
+        Aim_MicroTremor    = Aim.MicroTremor,
+        Aim_TremorIntensity = Aim.TremorIntensity
     }
+    local fileName = getFileName()
     if writefile then
-        writefile(CONFIG_FILE, HttpService:JSONEncode(data))
-        print("[Config] Zapisano do " .. CONFIG_FILE)
+        writefile(fileName, HttpService:JSONEncode(data))
+        print("[Config] Zapisano do " .. fileName)
     else
         warn("[Config] Executor nie wspiera writefile!")
     end
 end
 
 local function LoadConfig()
-    if readfile and isfile and isfile(CONFIG_FILE) then
-        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
+    local fileName = getFileName()
+    if readfile and isfile and isfile(fileName) then
+        local ok, data = pcall(function() return HttpService:JSONDecode(readfile(fileName)) end)
         if ok and data then
             local function b(new, old) return new ~= nil and new or old end
             Aim.Enabled            = b(data.Aim_Enabled,       Aim.Enabled)
@@ -70,6 +79,10 @@ local function LoadConfig()
             Aim.CurveAiming        = b(data.Aim_CurveAiming,   Aim.CurveAiming)
             Aim.CurveStrength      = b(data.Aim_CurveStrength, Aim.CurveStrength)
             Aim.SmoothnessVariance = b(data.Aim_SmoothVar,     Aim.SmoothnessVariance)
+            Aim.Acceleration       = b(data.Aim_Acceleration,  Aim.Acceleration)
+            Aim.Braking            = b(data.Aim_Braking,       Aim.Braking)
+            Aim.MicroTremor        = b(data.Aim_MicroTremor,   Aim.MicroTremor)
+            Aim.TremorIntensity    = b(data.Aim_TremorIntensity, Aim.TremorIntensity)
             
             if data.Aim_AimKey then
                 local s = data.Aim_AimKey
@@ -89,7 +102,7 @@ local function LoadConfig()
             ESPConf.Drawing.Healthbar.Enabled  = b(data.ESP_Health, ESPConf.Drawing.Healthbar.Enabled)
             ESPConf.Options.Distance           = b(data.ESP_Distance, ESPConf.Options.Distance)
             GUIConf.Theme          = b(data.GUI_Theme,         GUIConf.Theme)
-            print("[Config] Wczytano z " .. CONFIG_FILE)
+            print("[Config] Wczytano z " .. fileName)
         end
     end
 end
@@ -161,15 +174,18 @@ for i=1, 10 do
     table.insert(toggles, { BG=trackD(mkRect(12)), Fill=trackD(mkRect(13)), Lbl=trackD(mkText(13,13)) })
 end
 
--- Generic Sliders Pool (we need max ~5 sliders per tab)
+-- Generic Sliders Pool (we need max ~10 sliders per tab)
 local sliders = {}
-for i=1, 5 do
+for i=1, 10 do
     table.insert(sliders, { T=trackD(mkRect(12)), F=trackD(mkRect(13)), Lbl=trackD(mkText(13,13)), Val=trackD(mkText(13,13)) })
 end
 
 -- Dropdown / Buttons (Theme, Aim Part, Unload)
 local btn1BG = trackD(mkRect(12)); local btn1Lbl = trackD(mkText(13,13)); local btn1Val = trackD(mkText(13,13))
 local btn2BG = trackD(mkRect(12)); local btn2Lbl = trackD(mkText(13,13)); local btn2Val = trackD(mkText(13,13))
+local btn3BG = trackD(mkRect(12)); local btn3Lbl = trackD(mkText(13,13)); local btn3Val = trackD(mkText(13,13))
+local btn4BG = trackD(mkRect(12)); local btn4Lbl = trackD(mkText(13,13)); local btn4Val = trackD(mkText(13,13))
+local btn5BG = trackD(mkRect(12)); local btn5Lbl = trackD(mkText(13,13)); local btn5Val = trackD(mkText(13,13))
 local btnUnload = trackD(mkRect(12)); local lblUnload = trackD(mkText(14,13))
 
 local SLIDER_W = 180
@@ -322,6 +338,10 @@ local function updateGUI()
     elseif GUI.Tab == "Settings" then
         drawToggle(1, 15, "Watermark", Visuals.Watermark)
         drawButton(btn1BG, btn1Lbl, btn1Val, 45, "Theme Color:", GUIConf.Theme)
+        
+        drawButton(btn2BG, btn2Lbl, btn2Val, 100, "Config Slot:", "Slot " .. selectedSlot)
+        drawButton(btn3BG, btn3Lbl, btn3Val, 130, "Save Config", "")
+        drawButton(btn4BG, btn4Lbl, btn4Val, 160, "Load Config", "")
 
         btnUnload.Position = Vector2.new(x + sw + 20, y + h - 45)
         btnUnload.Size = Vector2.new(w - sw - 40, 30)
@@ -416,6 +436,17 @@ reg(UserInputService.InputBegan:Connect(function(input, gpe)
                 local idx = table.find(THEME_NAMES, GUIConf.Theme) or 1
                 GUIConf.Theme = THEME_NAMES[idx % #THEME_NAMES + 1] updateGUI()
             end
+            
+            if inBox(mx,my, cx, y + hh + 100, cw, 24) then
+                selectedSlot = selectedSlot % 5 + 1 updateGUI()
+            end
+            if inBox(mx,my, cx, y + hh + 130, cw, 24) then
+                SaveConfig()
+            end
+            if inBox(mx,my, cx, y + hh + 160, cw, 24) then
+                LoadConfig() updateGUI()
+            end
+
             if inBox(mx,my, cx, y + h - 45, cw, 30) then
                 if getgenv().ScoutUnload then getgenv().ScoutUnload() end
                 GUI.Visible = false setAll(false)

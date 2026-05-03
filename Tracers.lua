@@ -22,17 +22,21 @@ end
 
 local function spawnTracer(from, to)
     if not Visuals.BulletTracers then return end
-    local line = Drawing.new("Line")
-    line.Thickness  = Visuals.BulletTracerThickness
-    line.Color      = Visuals.BulletTracerColor
-    line.Transparency = 1
-    line.Visible    = true
-    line.ZIndex     = 5
+    
+    local distance = (to - from).Magnitude
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.CastShadow = false
+    part.Material = Enum.Material.Neon
+    part.Color = Visuals.BulletTracerColor
+    part.Size = Vector3.new(0.08, 0.08, distance)
+    part.CFrame = CFrame.new(from, to) * CFrame.new(0, 0, -distance / 2)
+    part.Parent = Workspace
+    
     table.insert(activeTracers, {
-        line      = line,
+        part      = part,
         spawnedAt = tick(),
-        from      = from,
-        to        = to,
     })
 end
 
@@ -145,7 +149,7 @@ end))
 reg(RunService.RenderStepped:Connect(function()
     if not Visuals.BulletTracers then
         -- Natychmiast usuń wszystkie aktywne tracery po wyłączeniu w configu
-        for _, t in ipairs(activeTracers) do pcall(function() t.line:Remove() end) end
+        for _, t in ipairs(activeTracers) do pcall(function() t.part:Destroy() end) end
         activeTracers = {}
         return
     end
@@ -156,19 +160,9 @@ reg(RunService.RenderStepped:Connect(function()
         local age  = now - t.spawnedAt
         local fade = Visuals.BulletTracerFadeTime
         if age >= fade then
-            pcall(function() t.line:Remove() end)
+            pcall(function() t.part:Destroy() end)
         else
-            local alpha = 1 - (age / fade)
-            local sp, onS = screenPoint(t.from)
-            local ep, onE = screenPoint(t.to)
-            if onS or onE then
-                t.line.From         = sp
-                t.line.To           = ep
-                t.line.Transparency = alpha
-                t.line.Visible      = true
-            else
-                t.line.Visible = false
-            end
+            t.part.Transparency = age / fade
             table.insert(alive, t)
         end
     end
@@ -177,7 +171,7 @@ end))
 
 -- Czyszczenie przy unloadzie (Unload.lua po prostu je :Remove())
 getgenv().ScoutCheat._cleanupTracers = function()
-    for _, t in ipairs(activeTracers) do pcall(function() t.line:Remove() end) end
+    for _, t in ipairs(activeTracers) do pcall(function() t.part:Destroy() end) end
 end
 
 

@@ -26,6 +26,15 @@ function Functions:FadeOutOnDist(el, dist)
     elseif el:IsA("Highlight") then el.FillTransparency=1-t el.OutlineTransparency=1-t end
 end
 
+local function IsVisible(targetPart)
+    local origin = Cam.CFrame.Position
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {targetPart.Parent, lplayer.Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local result = Workspace:Raycast(origin, targetPart.Position - origin, rayParams)
+    return result == nil
+end
+
 local SG = Functions:Create("ScreenGui",{Parent=CoreGui,Name="ESPHolder",ResetOnSpawn=false})
 getgenv().ScoutCheat._espGui = SG  -- Unload będzie destroy'ował
 
@@ -55,6 +64,9 @@ local function CreateESP(plr)
                 local Pos, OnScreen = Cam:WorldToScreenPoint(HRP.Position)
                 local Dist = (Cam.CFrame.Position - HRP.Position).Magnitude / 3.57
                 if OnScreen and Dist <= ESP.MaxDistance then
+                    local isVis = IsVisible(HRP)
+                    Outline.Color = isVis and Color3.new(1,1,1) or Color3.new(1,0,0)
+                    
                     local sf = (HRP.Size.Y * Cam.ViewportSize.Y)/(Pos.Z*2)
                     local w,h = 3*sf, 4.5*sf
                     if ESP.FadeOut.OnDistance then

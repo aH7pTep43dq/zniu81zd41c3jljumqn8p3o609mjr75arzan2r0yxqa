@@ -66,6 +66,15 @@ local function CreateESP(plr)
                 if OnScreen and Dist <= ESP.MaxDistance then
                     local isVis = IsVisible(HRP)
                     Outline.Color = isVis and Color3.new(1,1,1) or Color3.new(1,0,0)
+                    Box.BackgroundColor3 = isVis and Color3.new(0,0,0) or Color3.new(0.5, 0, 0)
+                    
+                    if ESP.Drawing.Boxes.GradientFill then
+                        if isVis then
+                            G1.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,ESP.Drawing.Boxes.GradientFillRGB1),ColorSequenceKeypoint.new(1,ESP.Drawing.Boxes.GradientFillRGB2)}
+                        else
+                            G1.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.new(1,0,0)),ColorSequenceKeypoint.new(1,Color3.new(0.3,0,0))}
+                        end
+                    end
                     
                     local sf = (HRP.Size.Y * Cam.ViewportSize.Y)/(Pos.Z*2)
                     local w,h = 3*sf, 4.5*sf
@@ -74,7 +83,8 @@ local function CreateESP(plr)
                         Functions:FadeOutOnDist(HBar,Dist) Functions:FadeOutOnDist(Chams,Dist)
                     end
                     Chams.Adornee=plr.Character Chams.Enabled=ESP.Drawing.Chams.Enabled
-                    Chams.FillColor=ESP.Drawing.Chams.FillRGB Chams.OutlineColor=ESP.Drawing.Chams.OutlineRGB
+                    Chams.FillColor = isVis and ESP.Drawing.Chams.FillRGB or Color3.new(1,0,0)
+                    Chams.OutlineColor = isVis and ESP.Drawing.Chams.OutlineRGB or Color3.new(1,0,0)
                     if ESP.Drawing.Chams.Thermal then
                         Chams.FillTransparency = ESP.Drawing.Chams.Fill_Transparency+(0.2*math.abs(math.sin(tick()*2)))
                     end

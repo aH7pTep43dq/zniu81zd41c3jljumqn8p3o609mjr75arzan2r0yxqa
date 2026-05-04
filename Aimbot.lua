@@ -12,13 +12,7 @@ local randomOffset = Vector3.new(0,0,0)
 local lastOffsetChange = tick()
 local currentTarget = nil
 local curveSign = 1
-local detectionTime = 0
 local lastTarget = nil
-local lastLostTime = 0
-local overshootVector = Vector3.new(0,0,0)
-local targetVelocity = Vector3.new(0,0,0)
-local lastPos = nil
-local lastPosTime = 0
 
 
 local function reg(c) table.insert(getgenv().ScoutCheat._connections, c) return c end
@@ -48,22 +42,6 @@ end
 local BONES = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso", "RightUpperArm", "LeftUpperArm", "RightUpperLeg", "LeftUpperLeg"}
 
 local function GetTarget()
-    if Aim.TargetLock and currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("Humanoid") and currentTarget.Character.Humanoid.Health > 0 then
-        local part = currentTarget.Character:FindFirstChild(Aim.AimPart)
-        if part then
-            if not Aim.VisibleCheck or IsVisible(currentTarget.Character, part.Name) then
-                local pos, onScreen = camera:WorldToViewportPoint(part.Position)
-                if onScreen then
-                    local ml = UserInputService:GetMouseLocation()
-                    local d = (Vector2.new(pos.X,pos.Y)-ml).Magnitude
-                    if d <= Aim.FOV_Radius then
-                        return currentTarget, d, part
-                    end
-                end
-            end
-        end
-    end
-
     local closest, minDist, bestPart = nil, Aim.FOV_Radius, nil
     local ml = UserInputService:GetMouseLocation()
     for _,v in pairs(Players:GetPlayers()) do
@@ -79,17 +57,6 @@ local function GetTarget()
                 end
             end
             
-            -- Weighted Bone Selection (Probability)
-            if Aim.WeightedHitZones and #partsToCheck > 1 then
-                local r = math.random(1, 100)
-                local selectedBone = "HumanoidRootPart"
-                if r <= 30 then selectedBone = "Head"
-                elseif r <= 80 then selectedBone = "UpperTorso"
-                end
-                local b = v.Character:FindFirstChild(selectedBone)
-                if b then partsToCheck = {b} end
-            end
-
             for _, part in ipairs(partsToCheck) do
                 if not part then continue end
                 if Aim.VisibleCheck and not IsVisible(v.Character, part.Name) then continue end
@@ -129,46 +96,16 @@ reg(RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Aim.FOV_Enabled
 
     if Aim.Enabled and aiming then
-        -- Target Switching Delay
-        if tick() - lastLostTime < Aim.SwitchDelay then return end
-
         local target, distToMouse, bestPart = GetTarget()
         if target and bestPart then
             if target ~= currentTarget then
                 currentTarget = target
                 curveSign = math.random() > 0.5 and 1 or -1
-                detectionTime = tick()
-                
-                -- Initialize Overshoot
-                if Aim.Overshooting then
-                    local side = Vector3.new(math.random()-0.5, math.random()-0.5, math.random()-0.5).Unit
-                    overshootVector = side * Aim.OvershootIntensity * (distToMouse / 50)
-                else
-                    overshootVector = Vector3.new(0,0,0)
-                end
             end
-            
-            -- Reaction Delay
-            if tick() - detectionTime < Aim.ReactionDelay then return end
 
             if distToMouse <= Aim.Deadzone then return end
             
             local tPos = bestPart.Position
-            
-            -- Velocity Tracking & Prediction
-            if Aim.Prediction then
-                local now = tick()
-                if lastPos and now - lastPosTime > 0 then
-                    local vel = (tPos - lastPos) / (now - lastPosTime)
-                    targetVelocity = targetVelocity:Lerp(vel, 0.2)
-                end
-                lastPos = tPos
-                lastPosTime = now
-                
-                local dist = (tPos - camera.CFrame.Position).Magnitude
-                local travelTime = dist / 1000 -- Assuming 1000 studs/s projectile speed
-                tPos = tPos + (targetVelocity * travelTime * Aim.PredictionStrength)
-            end
 
             if Aim.Randomization then
                 if tick() - lastOffsetChange > 0.2 then
@@ -178,12 +115,6 @@ reg(RunService.RenderStepped:Connect(function()
                 tPos = tPos + randomOffset
             end
             
-            -- Overshoot Correction
-            if Aim.Overshooting then
-                overshootVector = overshootVector:Lerp(Vector3.new(0,0,0), 0.05)
-                tPos = tPos + overshootVector
-            end
-
             if Aim.CurveAiming then
                 local toTarget = tPos - camera.CFrame.Position
                 local dist = toTarget.Magnitude
@@ -195,13 +126,6 @@ reg(RunService.RenderStepped:Connect(function()
             end
 
             local actualSmoothness = Aim.Smoothness
-            
-            -- Fitts's Law (Dynamic Smoothness)
-            if Aim.FittsLaw then
-                local distRatio = math.clamp(distToMouse / Aim.FOV_Radius, 0, 1)
-                -- Faster for long distances, slower for micro-corrections
-                actualSmoothness = actualSmoothness * (0.5 + distRatio * 1.5)
-            end
 
             -- Humanized Dynamics (Acceleration & Braking)
             local currentLook = camera.CFrame.LookVector
@@ -235,9 +159,7 @@ reg(RunService.RenderStepped:Connect(function()
             camera.CFrame = camera.CFrame:Lerp(CFrame.new(camera.CFrame.Position, tPos), math.clamp(actualSmoothness, 0.005, 1))
         else
             if currentTarget then
-                lastLostTime = tick()
                 currentTarget = nil
-                lastPos = nil
             end
         end
     end

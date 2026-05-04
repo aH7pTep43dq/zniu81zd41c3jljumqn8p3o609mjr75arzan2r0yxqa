@@ -13,15 +13,15 @@ _G.ScoutCheatLoaded = true
 
 print("[ScoutCheat] Ładowanie modułów...")
 
-local Config = loadstring(game:HttpGet(repoURL .. "Config.lua"))()
+local Config = loadstring(game:HttpGet(repoURL .. "Config.lua?t=" .. tick()))()
 getgenv().ScoutCheat = { Config = Config, _connections = {}, _drawings = {} }
 _G.ScoutCheat = getgenv().ScoutCheat
 
-loadstring(game:HttpGet(repoURL .. "ESP.lua"))()
-loadstring(game:HttpGet(repoURL .. "Aimbot.lua"))()
-loadstring(game:HttpGet(repoURL .. "Visuals.lua"))()
-loadstring(game:HttpGet(repoURL .. "Watermark.lua"))()
-loadstring(game:HttpGet(repoURL .. "GUI.lua"))()
-loadstring(game:HttpGet(repoURL .. "Unload.lua"))()
+loadstring(game:HttpGet(repoURL .. "ESP.lua?t=" .. tick()))()
+loadstring(game:HttpGet(repoURL .. "Aimbot.lua?t=" .. tick()))()
+loadstring(game:HttpGet(repoURL .. "Visuals.lua?t=" .. tick()))()
+loadstring(game:HttpGet(repoURL .. "Watermark.lua?t=" .. tick()))()
+loadstring(game:HttpGet(repoURL .. "GUI.lua?t=" .. tick()))()
+loadstring(game:HttpGet(repoURL .. "Unload.lua?t=" .. tick()))()
 
 print("[ScoutCheat] ✔ Załadowano pomyślnie!")
